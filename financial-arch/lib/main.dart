@@ -23,15 +23,19 @@ class FinancialArchitectApp extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         // Settings Provider
         ChangeNotifierProvider(create: (_) => SettingsProvider()),
-        // Home Provider
-        ProxyProvider<TransactionProvider, HomeProvider>(
+        // Home Provider - depends on TransactionProvider
+        ChangeNotifierProxyProvider<TransactionProvider, HomeProvider>(
           create: (context) => HomeProvider(
             transactionProvider: context.read<TransactionProvider>(),
           ),
-          update: (context, transactionProvider, homeProvider) =>
-              homeProvider ??
-              HomeProvider(transactionProvider: transactionProvider),
+          update: (context, transactionProvider, homeProvider) {
+            homeProvider!.updateTransactionProvider(transactionProvider);
+            return homeProvider;
+          },
         ),
+        // ChangeNotifierProvider(
+        //   create: (_) => HomeProvider(),
+        // )
       ],
       child: MaterialApp(
         title: 'Financial Architect',

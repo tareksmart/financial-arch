@@ -4,6 +4,7 @@ import '../models/index.dart';
 import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
+import '../services/voice_service.dart';
 
 /// Home screen - main dashboard with balance and transaction entry
 class HomeScreen extends StatefulWidget {
@@ -365,49 +366,36 @@ class _TransactionFormState extends State<_TransactionForm> {
           ),
           const SizedBox(height: 24),
 
-          // Note Field
-          FinancialArchitectTextField(
+          // Note Field with Voice Input
+          VoiceNoteInput(
+            noteController: widget.noteController,
             label: 'Details (Optional)',
-            hintText: 'Add notes...',
-            controller: widget.noteController,
-            maxLines: 2,
+            hint: 'Tap mic or type your notes...',
+            autoFocus: false,
           ),
           const SizedBox(height: 24),
 
           // Action Buttons
-          Row(
-            children: [
-              Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: IconButton(
-                  icon: const Icon(Icons.mic, color: AppColors.primary),
-                  onPressed: () {},
+          ElevatedButton(
+            onPressed: widget.onSubmit,
+            style: ElevatedButton.styleFrom(
+              backgroundColor: AppColors.primary,
+              padding: const EdgeInsets.symmetric(vertical: 16),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: SizedBox(
+              width: double.infinity,
+              child: Text(
+                'Record ${widget.selectedType == 'EXPENSE' ? 'Expense' : 'Income'}',
+                textAlign: TextAlign.center,
+                style: AppTextStyles.labelLarge.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w600,
                 ),
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: ElevatedButton(
-                  onPressed: widget.onSubmit,
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppColors.primary,
-                    padding: const EdgeInsets.symmetric(vertical: 16),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  child: Text(
-                    'Record ${widget.selectedType == 'EXPENSE' ? 'Expense' : 'Income'}',
-                    style: AppTextStyles.labelLarge.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
         ],
       ),

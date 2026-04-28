@@ -4,7 +4,7 @@ import 'transaction_provider.dart';
 
 /// Provider for managing home screen state (balance, summaries)
 class HomeProvider extends ChangeNotifier {
-  final TransactionProvider transactionProvider;
+  late TransactionProvider transactionProvider;
 
   double _todayBalance = 0.0;
   double _todayIncome = 0.0;
@@ -16,7 +16,9 @@ class HomeProvider extends ChangeNotifier {
   bool _isLoading = false;
   String? _error;
 
-  HomeProvider({required this.transactionProvider});
+  HomeProvider({required TransactionProvider transactionProvider}) {
+    this.transactionProvider = transactionProvider;
+  }
 
   // Getters
   double get todayBalance => _todayBalance;
@@ -41,9 +43,8 @@ class HomeProvider extends ChangeNotifier {
       final today = DateTime(now.year, now.month, now.day);
       final tomorrow = today.add(const Duration(days: 1));
       final monthStart = DateTime(now.year, now.month, 1);
-      final monthEnd = monthStart
-          .add(const Duration(days: 32))
-          .copyWith(day: 1);
+      final monthEnd =
+          monthStart.add(const Duration(days: 32)).copyWith(day: 1);
 
       // Today's data
       _todayIncome = await transactionProvider.getTotalIncome(today, tomorrow);
@@ -96,5 +97,19 @@ class HomeProvider extends ChangeNotifier {
       notifyListeners();
       return {'income': 0.0, 'expense': 0.0, 'balance': 0.0};
     }
+  }
+
+  /// Update the transaction provider dependency
+  void updateTransactionProvider(TransactionProvider newProvider) {
+    // Only notify if the provider reference actually changed
+    if (identical(transactionProvider, newProvider)) {
+      return;
+    }
+
+    // Update the provider reference
+    transactionProvider = newProvider;
+
+    // Reload home data with the new provider
+    loadHomeData();
   }
 }
