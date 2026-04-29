@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
+import '../localization/index.dart';
 
 /// Profile/Settings screen
 class ProfileScreen extends StatefulWidget {
@@ -23,154 +24,157 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: FinancialArchitectAppBar(
-        title: 'Profile & Settings',
-        showBackButton: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Profile Section
-            Container(
-              padding: const EdgeInsets.all(24),
-              decoration: BoxDecoration(
-                color: AppColors.surfaceContainerLowest,
-                borderRadius: BorderRadius.circular(16),
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: FinancialArchitectAppBar(
+          title: localization.translate('profile_settings'),
+          showBackButton: false,
+        ),
+        body: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Profile Section
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  color: AppColors.surfaceContainerLowest,
+                  borderRadius: BorderRadius.circular(16),
+                ),
+                child: Column(
+                  children: [
+                    Container(
+                      width: 80,
+                      height: 80,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        border: Border.all(color: AppColors.primary, width: 3),
+                      ),
+                      child: const Icon(
+                        Icons.person,
+                        size: 40,
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Text(
+                      localization.translate('user_profile'),
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: AppColors.primary,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      localization.translate('premium_member'),
+                      style: AppTextStyles.bodyMedium.copyWith(
+                        color: AppColors.onSurfaceVariant,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-              child: Column(
-                children: [
-                  Container(
-                    width: 80,
-                    height: 80,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      border: Border.all(color: AppColors.primary, width: 3),
-                    ),
-                    child: const Icon(
-                      Icons.person,
-                      size: 40,
-                      color: AppColors.primary,
-                    ),
+              const SizedBox(height: 32),
+
+              // Account Management
+              _SettingsSection(
+                title: localization.translate('account_management'),
+                items: [
+                  _SettingsItem(
+                    icon: Icons.person,
+                    title: localization.translate('personal_information'),
+                    subtitle: localization.translate('update_name_email'),
+                    onTap: () {},
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'User Profile',
-                    style: AppTextStyles.headlineSmall.copyWith(
-                      color: AppColors.primary,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Premium Member',
-                    style: AppTextStyles.bodyMedium.copyWith(
-                      color: AppColors.onSurfaceVariant,
-                    ),
+                  _SettingsItem(
+                    icon: Icons.security,
+                    title: localization.translate('security_privacy'),
+                    subtitle: localization.translate('two_factor_auth'),
+                    onTap: () {},
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 32),
+              const SizedBox(height: 24),
 
-            // Account Management
-            _SettingsSection(
-              title: 'Account Management',
-              items: [
-                _SettingsItem(
-                  icon: Icons.person,
-                  title: 'Personal Information',
-                  subtitle: 'Update your name and email',
-                  onTap: () {},
-                ),
-                _SettingsItem(
-                  icon: Icons.security,
-                  title: 'Security & Privacy',
-                  subtitle: 'Two-factor authentication',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              // Preferences
+              _SettingsSection(
+                title: localization.translate('app_preferences'),
+                items: [
+                  Consumer<SettingsProvider>(
+                    builder: (context, settingsProvider, _) {
+                      return Column(
+                        children: [
+                          _SettingItemWithToggle(
+                            icon: Icons.payments,
+                            title: localization.translate('currency'),
+                            value: settingsProvider.currency,
+                            onTap: () => _showCurrencyDialog(
+                                context, settingsProvider, localization),
+                          ),
+                          _SettingItemWithToggle(
+                            icon: Icons.language,
+                            title: localization.translate('language'),
+                            value: settingsProvider.language == 'en'
+                                ? localization.translate('english')
+                                : localization.translate('arabic'),
+                            onTap: () => _showLanguageDialog(
+                                context, settingsProvider, localization),
+                          ),
+                          _SettingItemWithToggle(
+                            icon: Icons.palette,
+                            title: localization.translate('theme'),
+                            value: settingsProvider.theme == 'light'
+                                ? localization.translate('light')
+                                : localization.translate('dark'),
+                            isLocked: true,
+                          ),
+                        ],
+                      );
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-            // Preferences
-            _SettingsSection(
-              title: 'App Preferences',
-              items: [
-                Consumer<SettingsProvider>(
-                  builder: (context, settingsProvider, _) {
-                    return Column(
-                      children: [
-                        _SettingItemWithToggle(
-                          icon: Icons.payments,
-                          title: 'Currency',
-                          value: settingsProvider.currency,
-                          onTap: () =>
-                              _showCurrencyDialog(context, settingsProvider),
-                        ),
-                        _SettingItemWithToggle(
-                          icon: Icons.language,
-                          title: 'Language',
-                          value: settingsProvider.language == 'en'
-                              ? 'English'
-                              : 'العربية',
-                          onTap: () =>
-                              _showLanguageDialog(context, settingsProvider),
-                        ),
-                        _SettingItemWithToggle(
-                          icon: Icons.palette,
-                          title: 'Theme',
-                          value: settingsProvider.theme == 'light'
-                              ? 'Light'
-                              : 'Dark',
-                          isLocked: true,
-                        ),
-                      ],
-                    );
-                  },
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
+              // Information
+              _SettingsSection(
+                title: localization.translate('information'),
+                items: [
+                  _SettingsItem(
+                    icon: Icons.info,
+                    title: localization.translate('about_app'),
+                    subtitle: localization.translate('version'),
+                    onTap: () {},
+                  ),
+                  _SettingsItem(
+                    icon: Icons.description,
+                    title: localization.translate('legal_terms'),
+                    subtitle: localization.translate('privacy_policy'),
+                    onTap: () {},
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
 
-            // Information
-            _SettingsSection(
-              title: 'Information',
-              items: [
-                _SettingsItem(
-                  icon: Icons.info,
-                  title: 'About Financial Architect',
-                  subtitle: 'Version 1.0.0',
-                  onTap: () {},
-                ),
-                _SettingsItem(
-                  icon: Icons.description,
-                  title: 'Legal & Terms',
-                  subtitle: 'Privacy Policy, Terms of Service',
-                  onTap: () {},
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-
-            // Logout
-            SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () {},
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppColors.error,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-                child: Text(
-                  'Logout',
-                  style: AppTextStyles.labelLarge.copyWith(color: Colors.white),
+              // Logout
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () {},
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: AppColors.error,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                  child: Text(
+                    localization.translate('logout'),
+                    style:
+                        AppTextStyles.labelLarge.copyWith(color: Colors.white),
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
@@ -179,11 +183,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showCurrencyDialog(
     BuildContext context,
     SettingsProvider settingsProvider,
+    LocalizationProvider localization,
   ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Currency'),
+        title: Text(localization.translate('select_currency')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: ['EGP', 'USD', 'EUR', 'SAR']
@@ -205,23 +210,24 @@ class _ProfileScreenState extends State<ProfileScreen> {
   void _showLanguageDialog(
     BuildContext context,
     SettingsProvider settingsProvider,
+    LocalizationProvider localization,
   ) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Language'),
+        title: Text(localization.translate('select_language')),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('English'),
+              title: Text(localization.translate('english')),
               onTap: () {
                 settingsProvider.setLanguage('en');
                 Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text('العربية'),
+              title: Text(localization.translate('arabic')),
               onTap: () {
                 settingsProvider.setLanguage('ar');
                 Navigator.pop(context);

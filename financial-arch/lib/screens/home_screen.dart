@@ -5,6 +5,7 @@ import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
 import '../services/voice_service.dart';
+import '../localization/index.dart';
 
 /// Home screen - main dashboard with balance and transaction entry
 class HomeScreen extends StatefulWidget {
@@ -47,9 +48,11 @@ class _HomeScreenState extends State<HomeScreen> {
 
   void _submitTransaction() async {
     if (_amountController.text.isEmpty || _selectedCategory == null) {
+      final localization = context.read<LocalizationProvider>();
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Please fill all fields')));
+      ).showSnackBar(SnackBar(
+          content: Text(localization.translate('please_fill_all_fields'))));
       return;
     }
 
@@ -73,8 +76,9 @@ class _HomeScreenState extends State<HomeScreen> {
     _selectedCategory = null;
     setState(() {});
 
+    final localization = context.read<LocalizationProvider>();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Transaction recorded successfully')),
+      SnackBar(content: Text(localization.translate('transaction_recorded'))),
     );
   }
 
@@ -85,17 +89,20 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(
         backgroundColor: AppColors.surface,
         elevation: 0,
-        title: Row(
-          children: [
-            const Icon(Icons.account_balance_wallet, color: AppColors.primary),
-            const SizedBox(width: 8),
-            Text(
-              'Financial Architect',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.primary,
+        title: Consumer<LocalizationProvider>(
+          builder: (context, localization, _) => Row(
+            children: [
+              const Icon(Icons.account_balance_wallet,
+                  color: AppColors.primary),
+              const SizedBox(width: 8),
+              Text(
+                localization.translate('financial_architect'),
+                style: AppTextStyles.headlineSmall.copyWith(
+                  color: AppColors.primary,
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
         actions: [
           IconButton(
@@ -114,10 +121,10 @@ class _HomeScreenState extends State<HomeScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Pulse Card - Daily Balance
-            Consumer<HomeProvider>(
-              builder: (context, homeProvider, _) {
+            Consumer2<HomeProvider, LocalizationProvider>(
+              builder: (context, homeProvider, localization, _) {
                 return PulseCard(
-                  title: 'Net Daily Balance',
+                  title: localization.translate('net_daily_balance'),
                   amount: homeProvider.todayBalance.toStringAsFixed(2),
                   currency: 'EGP',
                   subtitle:
@@ -126,7 +133,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                         child: _BalanceSummaryItem(
-                          label: 'Income',
+                          label: localization.translate('income'),
                           amount: homeProvider.todayIncome,
                           isIncome: true,
                         ),
@@ -134,7 +141,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       const SizedBox(width: 12),
                       Expanded(
                         child: _BalanceSummaryItem(
-                          label: 'Spent',
+                          label: localization.translate('spent'),
                           amount: homeProvider.todayExpense,
                           isIncome: false,
                         ),
@@ -161,15 +168,19 @@ class _HomeScreenState extends State<HomeScreen> {
             const SizedBox(height: 32),
 
             // Recent Transactions
-            Text(
-              'Recent Transactions',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.primary,
+            Consumer<LocalizationProvider>(
+              builder: (context, localization, _) => Text(
+                localization.translate('recent_transactions'),
+                style: AppTextStyles.headlineSmall.copyWith(
+                  color: AppColors.primary,
+                ),
               ),
             ),
             const SizedBox(height: 12),
-            Consumer2<TransactionProvider, CategoryProvider>(
-              builder: (context, transactionProvider, categoryProvider, _) {
+            Consumer3<TransactionProvider, CategoryProvider,
+                LocalizationProvider>(
+              builder: (context, transactionProvider, categoryProvider,
+                  localization, _) {
                 final recentTransactions =
                     transactionProvider.allTransactions.take(5).toList();
                 if (recentTransactions.isEmpty) {
@@ -177,7 +188,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     padding: const EdgeInsets.all(32),
                     child: Center(
                       child: Text(
-                        'No transactions yet',
+                        localization.translate('no_transactions_yet'),
                         style: AppTextStyles.bodyMedium.copyWith(
                           color: AppColors.onSurfaceVariant,
                         ),
@@ -304,110 +315,115 @@ class _TransactionForm extends StatefulWidget {
 class _TransactionFormState extends State<_TransactionForm> {
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.all(24),
-      decoration: BoxDecoration(
-        color: AppColors.surfaceContainerLow,
-        borderRadius: BorderRadius.circular(32),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Type Tabs
-          Consumer<CategoryProvider>(
-            builder: (context, categoryProvider, _) {
-              return Container(
-                decoration: BoxDecoration(
-                  color: AppColors.surface,
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Container(
+        padding: const EdgeInsets.all(24),
+        decoration: BoxDecoration(
+          color: AppColors.surfaceContainerLow,
+          borderRadius: BorderRadius.circular(32),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Type Tabs
+            Consumer<CategoryProvider>(
+              builder: (context, categoryProvider, _) {
+                return Container(
+                  decoration: BoxDecoration(
+                    color: AppColors.surface,
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Row(
+                    children: [
+                      _TypeTab(
+                        label: localization.translate('expense'),
+                        isSelected: widget.selectedType == 'EXPENSE',
+                        onTap: () => widget.onTypeChanged('EXPENSE'),
+                      ),
+                      _TypeTab(
+                        label: localization.translate('income_label'),
+                        isSelected: widget.selectedType == 'INCOME',
+                        onTap: () => widget.onTypeChanged('INCOME'),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Amount Field
+            FinancialArchitectTextField(
+              label: localization.translate('amount'),
+              hintText: '0.00',
+              controller: widget.amountController,
+              keyboardType: TextInputType.number,
+              prefix: 'EGP',
+            ),
+            const SizedBox(height: 24),
+
+            // Category Field
+            Consumer<CategoryProvider>(
+              builder: (context, categoryProvider, _) {
+                final categories = widget.selectedType == 'EXPENSE'
+                    ? categoryProvider.expenseCategories
+                    : categoryProvider.incomeCategories;
+
+                return CategorySelectorButton(
+                  selectedCategory: widget.selectedCategory?.nameEn,
+                  onTap: () =>
+                      _showCategoryDialog(context, categories, localization),
+                  label: localization.translate('category'),
+                );
+              },
+            ),
+            const SizedBox(height: 24),
+
+            // Note Field with Voice Input
+            VoiceNoteInput(
+              noteController: widget.noteController,
+              label: localization.translate('details_optional'),
+              hint: localization.translate('tap_mic_or_type'),
+              autoFocus: false,
+            ),
+            const SizedBox(height: 24),
+
+            // Action Buttons
+            ElevatedButton(
+              onPressed: widget.onSubmit,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Row(
-                  children: [
-                    _TypeTab(
-                      label: 'Expense',
-                      isSelected: widget.selectedType == 'EXPENSE',
-                      onTap: () => widget.onTypeChanged('EXPENSE'),
-                    ),
-                    _TypeTab(
-                      label: 'Income',
-                      isSelected: widget.selectedType == 'INCOME',
-                      onTap: () => widget.onTypeChanged('INCOME'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Amount Field
-          FinancialArchitectTextField(
-            label: 'Amount',
-            hintText: '0.00',
-            controller: widget.amountController,
-            keyboardType: TextInputType.number,
-            prefix: 'EGP',
-          ),
-          const SizedBox(height: 24),
-
-          // Category Field
-          Consumer<CategoryProvider>(
-            builder: (context, categoryProvider, _) {
-              final categories = widget.selectedType == 'EXPENSE'
-                  ? categoryProvider.expenseCategories
-                  : categoryProvider.incomeCategories;
-
-              return CategorySelectorButton(
-                selectedCategory: widget.selectedCategory?.nameEn,
-                onTap: () => _showCategoryDialog(context, categories),
-                label: 'Category',
-              );
-            },
-          ),
-          const SizedBox(height: 24),
-
-          // Note Field with Voice Input
-          VoiceNoteInput(
-            noteController: widget.noteController,
-            label: 'Details (Optional)',
-            hint: 'Tap mic or type your notes...',
-            autoFocus: false,
-          ),
-          const SizedBox(height: 24),
-
-          // Action Buttons
-          ElevatedButton(
-            onPressed: widget.onSubmit,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.primary,
-              padding: const EdgeInsets.symmetric(vertical: 16),
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(12),
               ),
-            ),
-            child: SizedBox(
-              width: double.infinity,
-              child: Text(
-                'Record ${widget.selectedType == 'EXPENSE' ? 'Expense' : 'Income'}',
-                textAlign: TextAlign.center,
-                style: AppTextStyles.labelLarge.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
+              child: SizedBox(
+                width: double.infinity,
+                child: Text(
+                  widget.selectedType == 'EXPENSE'
+                      ? localization.translate('record_expense')
+                      : localization.translate('record_income'),
+                  textAlign: TextAlign.center,
+                  style: AppTextStyles.labelLarge.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.w600,
+                  ),
                 ),
               ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
 
-  void _showCategoryDialog(
-      BuildContext context, List<CategoryModel> categories) {
+  void _showCategoryDialog(BuildContext context, List<CategoryModel> categories,
+      LocalizationProvider localization) {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Select Category'),
+        title: Text(localization.translate('select_category')),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,

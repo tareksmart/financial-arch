@@ -1,10 +1,12 @@
 import 'package:flutter/foundation.dart';
 import '../models/index.dart';
 import '../database/index.dart';
+import '../localization/index.dart';
 
 /// Provider for managing app settings and preferences
 class SettingsProvider extends ChangeNotifier {
   final DatabaseHelper _dbHelper = DatabaseHelper();
+  LocalizationProvider? _localizationProvider;
 
   Map<String, String> _settings = {};
   bool _isLoading = false;
@@ -15,9 +17,14 @@ class SettingsProvider extends ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get error => _error;
 
-  String get language => _settings['language'] ?? 'en';
+  String get language => _settings['language'] ?? 'ar';
   String get currency => _settings['currency'] ?? 'EGP';
   String get theme => _settings['theme'] ?? 'light';
+
+  /// Set reference to LocalizationProvider
+  void updateLocalizationProvider(LocalizationProvider localizationProvider) {
+    _localizationProvider = localizationProvider;
+  }
 
   /// Initialize and load all settings
   Future<void> loadSettings() async {
@@ -27,6 +34,10 @@ class SettingsProvider extends ChangeNotifier {
 
     try {
       _settings = await _dbHelper.getAllSettings();
+      // Initialize localization with loaded language
+      if (_localizationProvider != null) {
+        _localizationProvider!.initializeLocale(_settings['language'] ?? 'ar');
+      }
     } catch (e) {
       _error = e.toString();
     } finally {
@@ -64,7 +75,11 @@ class SettingsProvider extends ChangeNotifier {
 
   /// Update language setting
   Future<bool> setLanguage(String languageCode) async {
-    return await setSetting('language', languageCode);
+    final result = await setSetting('language', languageCode);
+    if (result && _localizationProvider != null) {
+      await _localizationProvider!.setLocale(languageCode);
+    }
+    return result;
   }
 
   /// Update currency setting
@@ -92,3 +107,4 @@ class SettingsProvider extends ChangeNotifier {
     }
   }
 }
+

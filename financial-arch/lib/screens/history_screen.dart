@@ -4,6 +4,7 @@ import '../models/index.dart';
 import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
+import '../localization/index.dart';
 
 /// History/Transaction list screen
 class HistoryScreen extends StatefulWidget {
@@ -33,48 +34,49 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: FinancialArchitectAppBar(
-        title: 'Transaction History',
-        showBackButton: false,
-      ),
-      body: Column(
-        children: [
-          // Filter Tabs
-          Container(
-            padding: const EdgeInsets.all(16),
-            child: Row(
-              children: [
-                _FilterTab(
-                  label: 'All',
-                  isSelected: _filterType == 'ALL',
-                  onTap: () => setState(() => _filterType = 'ALL'),
-                ),
-                const SizedBox(width: 8),
-                _FilterTab(
-                  label: 'Income',
-                  isSelected: _filterType == 'INCOME',
-                  onTap: () => setState(() => _filterType = 'INCOME'),
-                ),
-                const SizedBox(width: 8),
-                _FilterTab(
-                  label: 'Expense',
-                  isSelected: _filterType == 'EXPENSE',
-                  onTap: () => setState(() => _filterType = 'EXPENSE'),
-                ),
-              ],
+    return Consumer<LocalizationProvider>(
+      builder: (context, localization, _) => Scaffold(
+        backgroundColor: AppColors.surface,
+        appBar: FinancialArchitectAppBar(
+          title: localization.translate('transaction_history'),
+          showBackButton: false,
+        ),
+        body: Column(
+          children: [
+            // Filter Tabs
+            Container(
+              padding: const EdgeInsets.all(16),
+              child: Row(
+                children: [
+                  _FilterTab(
+                    label: localization.translate('all'),
+                    isSelected: _filterType == 'ALL',
+                    onTap: () => setState(() => _filterType = 'ALL'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterTab(
+                    label: localization.translate('income'),
+                    isSelected: _filterType == 'INCOME',
+                    onTap: () => setState(() => _filterType = 'INCOME'),
+                  ),
+                  const SizedBox(width: 8),
+                  _FilterTab(
+                    label: localization.translate('expense'),
+                    isSelected: _filterType == 'EXPENSE',
+                    onTap: () => setState(() => _filterType = 'EXPENSE'),
+                  ),
+                ],
+              ),
             ),
-          ),
 
-          // Date Range Filter
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
-            child: Row(
-              children: [
+            // Date Range Filter
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Row(
+                children: [
                 Expanded(
                   child: GestureDetector(
-                    onTap: () => _selectDateRange(context),
+                onTap: () => _selectDateRange(context, localization),
                     child: Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
@@ -120,10 +122,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
                 if (filteredTransactions.isEmpty) {
                   return Center(
-                    child: Text(
-                      'No transactions found',
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.onSurfaceVariant,
+                    child: Consumer<LocalizationProvider>(
+                      builder: (context, localization, _) => Text(
+                        localization.translate('no_transactions_found'),
+                        style: AppTextStyles.bodyMedium.copyWith(
+                          color: AppColors.onSurfaceVariant,
+                        ),
                       ),
                     ),
                   );
@@ -164,10 +168,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
         ],
       ),
-    );
-  }
+    ),    );  }
 
-  void _selectDateRange(BuildContext context) async {
+  void _selectDateRange(BuildContext context, LocalizationProvider localization) async {
     final picked = await showDateRangePicker(
       context: context,
       firstDate: DateTime(2020),
@@ -184,27 +187,29 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   void _editTransaction(BuildContext context, TransactionModel transaction) {
+    final localization = context.read<LocalizationProvider>();
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text('Edit functionality coming soon')),
+      SnackBar(content: Text(localization.translate('edit_functionality'))),
     );
   }
 
   void _deleteTransaction(BuildContext context, int id) async {
+    final localization = context.read<LocalizationProvider>();
     final confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Delete Transaction'),
-        content: const Text(
-          'Are you sure you want to delete this transaction?',
+        title: Text(localization.translate('delete_transaction')),
+        content: Text(
+          localization.translate('are_you_sure_delete'),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context, false),
-            child: const Text('Cancel'),
+            child: Text(localization.translate('cancel')),
           ),
           TextButton(
             onPressed: () => Navigator.pop(context, true),
-            child: const Text('Delete'),
+            child: Text(localization.translate('delete')),
           ),
         ],
       ),
@@ -215,7 +220,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       if (!mounted) return;
       ScaffoldMessenger.of(
         context,
-      ).showSnackBar(const SnackBar(content: Text('Transaction deleted')));
+      ).showSnackBar(SnackBar(content: Text(localization.translate('transaction_deleted'))));
     }
   }
 }

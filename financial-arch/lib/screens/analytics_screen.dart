@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
+import '../localization/index.dart';
 
 /// Analytics/Chart screen
 class AnalyticsScreen extends StatefulWidget {
@@ -28,181 +29,197 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: AppColors.surface,
-      appBar: FinancialArchitectAppBar(
-        title: 'Analytics Dashboard',
-        showBackButton: false,
-      ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Period Selector
-            _PeriodSelector(
-              selectedPeriod: _selectedPeriod,
-              onPeriodChanged: (period) =>
-                  setState(() => _selectedPeriod = period),
-            ),
-            const SizedBox(height: 24),
-
-            // Summary Cards
-            Consumer<HomeProvider>(
-              builder: (context, homeProvider, _) {
-                return Row(
+    return Consumer<LocalizationProvider>(
+        builder: (context, localization, _) => Scaffold(
+              backgroundColor: AppColors.surface,
+              appBar: FinancialArchitectAppBar(
+                title: localization.translate('analytics_dashboard'),
+                showBackButton: false,
+              ),
+              body: SingleChildScrollView(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Expanded(
-                      child: _AnalyticsCard(
-                        title: 'Income',
-                        amount: homeProvider.monthlyIncome.toStringAsFixed(2),
-                        icon: Icons.trending_up,
-                        color: AppColors.success,
+                    // Period Selector
+                    _PeriodSelector(
+                      selectedPeriod: _selectedPeriod,
+                      onPeriodChanged: (period) =>
+                          setState(() => _selectedPeriod = period),
+                      localization: localization,
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Summary Cards
+                    Consumer<HomeProvider>(
+                      builder: (context, homeProvider, _) {
+                        return Row(
+                          children: [
+                            Expanded(
+                              child: _AnalyticsCard(
+                                title: localization.translate('income'),
+                                amount: homeProvider.monthlyIncome
+                                    .toStringAsFixed(2),
+                                icon: Icons.trending_up,
+                                color: AppColors.success,
+                              ),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: _AnalyticsCard(
+                                title: localization.translate('expenses'),
+                                amount: homeProvider.monthlyExpense
+                                    .toStringAsFixed(2),
+                                icon: Icons.trending_down,
+                                color: AppColors.error,
+                              ),
+                            ),
+                          ],
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Net Balance Card
+                    Consumer<HomeProvider>(
+                      builder: (context, homeProvider, _) {
+                        return PulseCard(
+                          title: localization.translate('monthly_balance'),
+                          amount: homeProvider.monthlyBalance
+                              .abs()
+                              .toStringAsFixed(2),
+                          currency: 'EGP',
+                          backgroundColor: homeProvider.monthlyBalance >= 0
+                              ? AppColors.success
+                              : AppColors.error,
+                        );
+                      },
+                    ),
+                    const SizedBox(height: 24),
+
+                    // Category Breakdown Title
+                    Text(
+                      localization.translate('spending_by_category'),
+                      style: AppTextStyles.headlineSmall.copyWith(
+                        color: AppColors.primary,
                       ),
                     ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _AnalyticsCard(
-                        title: 'Expenses',
-                        amount: homeProvider.monthlyExpense.toStringAsFixed(2),
-                        icon: Icons.trending_down,
-                        color: AppColors.error,
-                      ),
+                    const SizedBox(height: 12),
+
+                    // Category Breakdown List
+                    Consumer2<TransactionProvider, CategoryProvider>(
+                      builder:
+                          (context, transactionProvider, categoryProvider, _) {
+                        return FutureBuilder<Map<int, double>>(
+                          future: () async {
+                            final now = DateTime.now();
+                            final monthStart = DateTime(now.year, now.month, 1);
+                            final monthEnd = monthStart
+                                .add(const Duration(days: 32))
+                                .copyWith(day: 1);
+                            return await transactionProvider
+                                .getSpendingByCategory(
+                              monthStart,
+                              monthEnd,
+                            );
+                          }(),
+                          builder: (context, snapshot) {
+                            if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                              return Center(
+                                child: Text(
+                                  localization.translate('no_spending_data'),
+                                  style: AppTextStyles.bodyMedium.copyWith(
+                                    color: AppColors.onSurfaceVariant,
+                                  ),
+                                ),
+                              );
+                            }
+
+                            final spendingData = snapshot.data!;
+                            return Column(
+                              children: spendingData.entries.map((entry) {
+                                final category = categoryProvider.allCategories
+                                    .where((CategoryModel cat) =>
+                                        cat.id == entry.key)
+                                    .firstOrNull;
+
+                                if (category == null)
+                                  return const SizedBox.shrink();
+
+                                return Container(
+                                  padding: const EdgeInsets.all(12),
+                                  margin: const EdgeInsets.only(bottom: 8),
+                                  decoration: BoxDecoration(
+                                    color: AppColors.surfaceContainerLowest,
+                                    borderRadius: BorderRadius.circular(12),
+                                  ),
+                                  child: Row(
+                                    children: [
+                                      Icon(
+                                        Icons.account_balance,
+                                        color: AppColors.primary,
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Expanded(
+                                        child: Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              category.nameEn,
+                                              style: AppTextStyles.titleSmall
+                                                  .copyWith(
+                                                color: AppColors.onSurface,
+                                              ),
+                                            ),
+                                            const SizedBox(height: 4),
+                                            ClipRRect(
+                                              borderRadius:
+                                                  BorderRadius.circular(4),
+                                              child: LinearProgressIndicator(
+                                                minHeight: 4,
+                                                value:
+                                                    (entry.value / 10000).clamp(
+                                                  0,
+                                                  1,
+                                                ),
+                                                backgroundColor: AppColors
+                                                    .surfaceContainerLow,
+                                                valueColor:
+                                                    AlwaysStoppedAnimation(
+                                                  Color(
+                                                    int.parse(
+                                                      '0xFF${category.colorHex?.replaceAll('#', '') ?? '1A237E'}',
+                                                    ),
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        '${entry.value.toStringAsFixed(0)} EGP',
+                                        style:
+                                            AppTextStyles.titleSmall.copyWith(
+                                          color: AppColors.primary,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            );
+                          },
+                        );
+                      },
                     ),
                   ],
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Net Balance Card
-            Consumer<HomeProvider>(
-              builder: (context, homeProvider, _) {
-                return PulseCard(
-                  title: 'Monthly Balance',
-                  amount: homeProvider.monthlyBalance.abs().toStringAsFixed(2),
-                  currency: 'EGP',
-                  backgroundColor: homeProvider.monthlyBalance >= 0
-                      ? AppColors.success
-                      : AppColors.error,
-                );
-              },
-            ),
-            const SizedBox(height: 24),
-
-            // Category Breakdown Title
-            Text(
-              'Spending by Category',
-              style: AppTextStyles.headlineSmall.copyWith(
-                color: AppColors.primary,
+                ),
               ),
-            ),
-            const SizedBox(height: 12),
-
-            // Category Breakdown List
-            Consumer2<TransactionProvider, CategoryProvider>(
-              builder: (context, transactionProvider, categoryProvider, _) {
-                return FutureBuilder<Map<int, double>>(
-                  future: () async {
-                    final now = DateTime.now();
-                    final monthStart = DateTime(now.year, now.month, 1);
-                    final monthEnd = monthStart
-                        .add(const Duration(days: 32))
-                        .copyWith(day: 1);
-                    return await transactionProvider.getSpendingByCategory(
-                      monthStart,
-                      monthEnd,
-                    );
-                  }(),
-                  builder: (context, snapshot) {
-                    if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                      return Center(
-                        child: Text(
-                          'No spending data',
-                          style: AppTextStyles.bodyMedium.copyWith(
-                            color: AppColors.onSurfaceVariant,
-                          ),
-                        ),
-                      );
-                    }
-
-                    final spendingData = snapshot.data!;
-                    return Column(
-                      children: spendingData.entries.map((entry) {
-                        final category = categoryProvider.allCategories
-                            .where((CategoryModel cat) => cat.id == entry.key)
-                            .firstOrNull;
-
-                        if (category == null) return const SizedBox.shrink();
-
-                        return Container(
-                          padding: const EdgeInsets.all(12),
-                          margin: const EdgeInsets.only(bottom: 8),
-                          decoration: BoxDecoration(
-                            color: AppColors.surfaceContainerLowest,
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Row(
-                            children: [
-                              Icon(
-                                Icons.account_balance,
-                                color: AppColors.primary,
-                              ),
-                              const SizedBox(width: 12),
-                              Expanded(
-                                child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      category.nameEn,
-                                      style: AppTextStyles.titleSmall.copyWith(
-                                        color: AppColors.onSurface,
-                                      ),
-                                    ),
-                                    const SizedBox(height: 4),
-                                    ClipRRect(
-                                      borderRadius: BorderRadius.circular(4),
-                                      child: LinearProgressIndicator(
-                                        minHeight: 4,
-                                        value: (entry.value / 10000).clamp(
-                                          0,
-                                          1,
-                                        ),
-                                        backgroundColor:
-                                            AppColors.surfaceContainerLow,
-                                        valueColor: AlwaysStoppedAnimation(
-                                          Color(
-                                            int.parse(
-                                              '0xFF${category.colorHex?.replaceAll('#', '') ?? '1A237E'}',
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Text(
-                                '${entry.value.toStringAsFixed(0)} EGP',
-                                style: AppTextStyles.titleSmall.copyWith(
-                                  color: AppColors.primary,
-                                  fontWeight: FontWeight.w700,
-                                ),
-                              ),
-                            ],
-                          ),
-                        );
-                      }).toList(),
-                    );
-                  },
-                );
-              },
-            ),
-          ],
-        ),
-      ),
-    );
+            ));
   }
 }
 
@@ -210,10 +227,12 @@ class _AnalyticsScreenState extends State<AnalyticsScreen> {
 class _PeriodSelector extends StatelessWidget {
   final String selectedPeriod;
   final ValueChanged<String> onPeriodChanged;
+  final LocalizationProvider localization;
 
   const _PeriodSelector({
     required this.selectedPeriod,
     required this.onPeriodChanged,
+    required this.localization,
   });
 
   @override
@@ -227,17 +246,17 @@ class _PeriodSelector extends StatelessWidget {
       child: Row(
         children: [
           _PeriodButton(
-            label: 'Day',
+            label: localization.translate('day'),
             isSelected: selectedPeriod == 'DAY',
             onTap: () => onPeriodChanged('DAY'),
           ),
           _PeriodButton(
-            label: 'Month',
+            label: localization.translate('month'),
             isSelected: selectedPeriod == 'MONTH',
             onTap: () => onPeriodChanged('MONTH'),
           ),
           _PeriodButton(
-            label: 'Year',
+            label: localization.translate('year'),
             isSelected: selectedPeriod == 'YEAR',
             onTap: () => onPeriodChanged('YEAR'),
           ),

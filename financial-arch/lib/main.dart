@@ -4,6 +4,8 @@ import 'package:provider/provider.dart';
 import 'providers/index.dart';
 import 'screens/index.dart';
 import 'theme/index.dart';
+import 'localization/index.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -17,12 +19,20 @@ class FinancialArchitectApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiProvider(
       providers: [
+        // Localization Provider
+        ChangeNotifierProvider(create: (_) => LocalizationProvider()),
         // Category Provider
         ChangeNotifierProvider(create: (_) => CategoryProvider()),
         // Transaction Provider
         ChangeNotifierProvider(create: (_) => TransactionProvider()),
         // Settings Provider
-        ChangeNotifierProvider(create: (_) => SettingsProvider()),
+        ChangeNotifierProxyProvider<LocalizationProvider, SettingsProvider>(
+          create: (context) => SettingsProvider(),
+          update: (context, localizationProvider, settingsProvider) {
+            settingsProvider?.updateLocalizationProvider(localizationProvider);
+            return settingsProvider!;
+          },
+        ),
         // Home Provider - depends on TransactionProvider
         ChangeNotifierProxyProvider<TransactionProvider, HomeProvider>(
           create: (context) => HomeProvider(
@@ -33,15 +43,25 @@ class FinancialArchitectApp extends StatelessWidget {
             return homeProvider;
           },
         ),
-        // ChangeNotifierProvider(
-        //   create: (_) => HomeProvider(),
-        // )
       ],
-      child: MaterialApp(
-        title: 'Financial Architect',
-        debugShowCheckedModeBanner: false,
-        theme: AppTheme.lightTheme(),
-        home: const MainApp(),
+      child: Consumer<LocalizationProvider>(
+        builder: (context, localizationProvider, _) {
+          return MaterialApp(
+            title: 'Financial Architect',
+            debugShowCheckedModeBanner: false,
+            locale: localizationProvider.getLocale(),
+            localizationsDelegates: const [
+            GlobalMaterialLocalizations.delegate,
+            GlobalWidgetsLocalizations.delegate,
+            ],
+            supportedLocales: const [
+              Locale('en', 'US'),
+              Locale('ar', 'SA'),
+            ],
+            theme: AppTheme.lightTheme(),
+            home: const MainApp(),
+          );
+        },
       ),
     );
   }
