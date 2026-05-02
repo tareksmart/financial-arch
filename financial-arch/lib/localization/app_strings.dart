@@ -5,7 +5,8 @@ class AppStrings {
     // App & Navigation
     'app_name': 'Financial Architect',
     'financial_architect': 'Financial Architect',
-
+'home': 'Home',
+    'analytics': 'Analytics',
     // Home Screen
     'net_daily_balance': 'Net Daily Balance',
     'balance_today': 'balance today',
@@ -80,7 +81,8 @@ class AppStrings {
     // App & Navigation
     'app_name': 'المهندس المالي',
     'financial_architect': 'المهندس المالي',
-
+'home': 'الرئيسية',
+    'analytics': 'التحليلات',
     // Home Screen
     'net_daily_balance': 'صافي الرصيد اليومي',
     'balance_today': 'الرصيد اليوم',

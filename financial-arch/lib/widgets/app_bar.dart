@@ -1,4 +1,6 @@
+import 'package:financial_architect/localization/localization_provider.dart';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../theme/index.dart';
 import 'dart:ui';
 /// Custom app bar for Financial Architect
@@ -7,6 +9,7 @@ class FinancialArchitectAppBar extends StatelessWidget implements PreferredSizeW
   final VoidCallback? onBackPressed;
   final List<Widget>? actions;
   final bool showBackButton;
+  
 
   const FinancialArchitectAppBar({
     Key? key,
@@ -18,6 +21,7 @@ class FinancialArchitectAppBar extends StatelessWidget implements PreferredSizeW
 
   @override
   Widget build(BuildContext context) {
+
     return AppBar(
       backgroundColor: AppColors.surface,
       elevation: 0,
@@ -77,10 +81,10 @@ class FinancialArchitectBottomNav extends StatelessWidget {
               onTap: onIndexChanged,
               backgroundColor: Colors.transparent,
               elevation: 0,
-              items: const [
+              items:  [
                 BottomNavigationBarItem(
                   icon: Icon(Icons.home),
-                  label: 'Home',
+                  label:context.read<LocalizationProvider>().translate('Home') ,
                 ),
                 BottomNavigationBarItem(
                   icon: Icon(Icons.query_stats),

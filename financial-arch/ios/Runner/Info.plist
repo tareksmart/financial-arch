@@ -16,6 +16,8 @@
 	<string>6.0</string>
 	<key>CFBundleName</key>
 	<string>financial_architect_flutter</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Microphone access is required to record audio within the app.</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
