@@ -1,5 +1,5 @@
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:flutter_native_timezone/flutter_native_timezone.dart';
+import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest_all.dart' as tz;
 import 'package:timezone/timezone.dart' as tz;
 
@@ -35,7 +35,8 @@ class NotificationService {
       );
 
   Future<void> init() async {
-    const androidSettings = AndroidInitializationSettings('@mipmap/ic_launcher');
+    const androidSettings =
+        AndroidInitializationSettings('@mipmap/ic_launcher');
     const iosSettings = DarwinInitializationSettings(
       requestAlertPermission: true,
       requestBadgePermission: true,
@@ -48,7 +49,7 @@ class NotificationService {
     );
 
     await _plugin.initialize(
-      initializationSettings,
+     settings:  initializationSettings,
       onDidReceiveNotificationResponse: (response) {
         // handle notification tap if needed
       },
@@ -59,8 +60,10 @@ class NotificationService {
 
   Future<void> _configureLocalTimeZone() async {
     tz.initializeTimeZones();
-    final timeZoneName = await FlutterNativeTimezone.getLocalTimezone();
-    tz.setLocalLocation(tz.getLocation(timeZoneName));
+
+    final timeZoneName = await FlutterTimezone.getLocalTimezone();
+   // Flutter_timezone.FlutterTimezone();
+    tz.setLocalLocation(tz.getLocation(timeZoneName.identifier));
   }
 
   Future<void> scheduleIncomeNotification({
@@ -73,14 +76,13 @@ class NotificationService {
         : 'You added ${amount.toStringAsFixed(2)} EGP.';
 
     await _plugin.zonedSchedule(
-      0,
-      title,
-      body,
-      tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
-      _notificationDetails,
-      androidAllowWhileIdle: true,
-      uiLocalNotificationDateInterpretation:
-          UILocalNotificationDateInterpretation.absoluteTime,
+     id:  0,
+     title:  title,
+      body:  body,
+      scheduledDate: tz.TZDateTime.now(tz.local).add(const Duration(seconds: 10)),
+      notificationDetails: _notificationDetails,
+      androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
+     
       matchDateTimeComponents: null,
     );
   }
