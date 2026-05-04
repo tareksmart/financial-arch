@@ -5,8 +5,21 @@ class AppStrings {
     // App & Navigation
     'app_name': 'Financial Architect',
     'financial_architect': 'Financial Architect',
-'home': 'Home',
+    'home': 'Home',
     'analytics': 'Analytics',
+
+    // Authentication
+    'login': 'Login',
+    'register': 'Register',
+    'email': 'Email',
+    'username': 'Username',
+    'password': 'Password',
+    'confirm_password': 'Confirm Password',
+    'no_account': "Don't have an account? ",
+    'have_account': 'Already have an account? ',
+    'select_theme': 'Select Theme',
+    'confirm_logout': 'Are you sure you want to logout?',
+
     // Home Screen
     'net_daily_balance': 'Net Daily Balance',
     'balance_today': 'balance today',
@@ -81,13 +94,21 @@ class AppStrings {
     // App & Navigation
     'app_name': 'المهندس المالي',
     'financial_architect': 'المهندس المالي',
-'home': 'الرئيسية',
+    'home': 'الرئيسية',
     'analytics': 'التحليلات',
-    // Home Screen
-    'net_daily_balance': 'صافي الرصيد اليومي',
-    'balance_today': 'الرصيد اليوم',
-    'income': 'الدخل',
-    'spent': 'الإنفاق',
+
+    // Authentication
+    'login': 'تسجيل الدخول',
+    'register': 'إنشاء حساب',
+    'email': 'البريد الإلكتروني',
+    'username': 'اسم المستخدم',
+    'password': 'كلمة المرور',
+    'confirm_password': 'تأكيد كلمة المرور',
+    'no_account': 'ليس لديك حساب؟ ',
+    'have_account': 'هل لديك حساب بالفعل؟ ',
+    'select_theme': 'اختر المظهر',
+    'confirm_logout': 'هل أنت متأكد من رغبتك في تسجيل الخروج؟',
+
     'recent_transactions': 'أحدث العمليات',
     'no_transactions_yet': 'لا توجد عمليات حتى الآن',
     'record_expense': 'تسجيل مصروف',

@@ -30,13 +30,15 @@ class SettingsProvider extends ChangeNotifier {
   Future<void> loadSettings() async {
     _isLoading = true;
     _error = null;
-    notifyListeners();
+    
+    
 
     try {
       _settings = await _dbHelper.getAllSettings();
       // Initialize localization with loaded language
       if (_localizationProvider != null) {
         _localizationProvider!.initializeLocale(_settings['language'] ?? 'ar');
+        notifyListeners();
       }
     } catch (e) {
       _error = e.toString();

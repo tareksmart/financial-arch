@@ -4,8 +4,8 @@ import '../models/index.dart';
 import '../providers/index.dart';
 import '../widgets/index.dart';
 import '../theme/index.dart';
-import '../services/notification_service.dart';
 import '../services/voice_service.dart';
+import '../services/income_reminder_service.dart';
 import '../localization/index.dart';
 
 /// Home screen - main dashboard with balance and transaction entry
@@ -36,6 +36,10 @@ class _HomeScreenState extends State<HomeScreen> {
       context.read<HomeProvider>().loadHomeData();
       context.read<TransactionProvider>().loadTransactions();
       context.read<CategoryProvider>().loadCategories();
+
+      // Check for income expiry reminder
+      final transactions = context.read<TransactionProvider>().allTransactions;
+      IncomeReminderService.checkAndShowExpiryReminder(context, transactions);
     });
   }
 
@@ -70,13 +74,6 @@ class _HomeScreenState extends State<HomeScreen> {
 
     await context.read<TransactionProvider>().addTransaction(transaction);
     await context.read<HomeProvider>().loadHomeData();
-
-    if (transaction.type == 'INCOME') {
-      await NotificationService().scheduleIncomeNotification(
-        amount: transaction.amount,
-        note: transaction.note,
-      );
-    }
 
     if (!mounted) return;
     _amountController.clear();

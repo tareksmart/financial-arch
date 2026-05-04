@@ -26,12 +26,29 @@ class DatabaseHelper {
     final documentDirectory = await getApplicationDocumentsDirectory();
     final path = join(documentDirectory.path, 'financial_architect.db');
 
-    return await openDatabase(path, version: 1, onCreate: _onCreate);
+    return await openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
     // Enable foreign keys
     await db.execute('PRAGMA foreign_keys = ON');
+
+    // Create Users Table
+    await db.execute('''
+      CREATE TABLE users (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        email TEXT UNIQUE NOT NULL,
+        username TEXT UNIQUE NOT NULL,
+        password_hash TEXT NOT NULL,
+        created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        last_login TEXT
+      )
+    ''');
 
     // Create Categories Table
     await db.execute('''
@@ -367,6 +384,98 @@ class DatabaseHelper {
     return await db.delete('settings', where: 'key = ?', whereArgs: [key]);
   }
 
+  // ============ USER OPERATIONS ============
+
+  /// Register a new user
+  Future<int> registerUser(UserModel user) async {
+    final db = await database;
+    return await db.insert(
+      'users',
+      user.toMap(),
+      conflictAlgorithm: ConflictAlgorithm.ignore,
+    );
+  }
+
+  /// Get user by email
+  Future<UserModel?> getUserByEmail(String email) async {
+    final db = await database;
+    final maps = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    if (maps.isEmpty) return null;
+    return UserModel.fromMap(maps.first);
+  }
+
+  /// Get user by username
+  Future<UserModel?> getUserByUsername(String username) async {
+    final db = await database;
+    final maps = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    if (maps.isEmpty) return null;
+    return UserModel.fromMap(maps.first);
+  }
+
+  /// Get user by ID
+  Future<UserModel?> getUserById(int id) async {
+    final db = await database;
+    final maps = await db.query(
+      'users',
+      where: 'id = ?',
+      whereArgs: [id],
+    );
+    if (maps.isEmpty) return null;
+    return UserModel.fromMap(maps.first);
+  }
+
+  /// Update user last login
+  Future<int> updateUserLastLogin(int userId) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      {'last_login': DateTime.now().toIso8601String()},
+      where: 'id = ?',
+      whereArgs: [userId],
+    );
+  }
+
+  /// Update user profile
+  Future<int> updateUserProfile(UserModel user) async {
+    final db = await database;
+    return await db.update(
+      'users',
+      user.toMap(),
+      where: 'id = ?',
+      whereArgs: [user.id],
+    );
+  }
+
+  /// Check if email exists
+  Future<bool> emailExists(String email) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'email = ?',
+      whereArgs: [email],
+    );
+    return result.isNotEmpty;
+  }
+
+  /// Check if username exists
+  Future<bool> usernameExists(String username) async {
+    final db = await database;
+    final result = await db.query(
+      'users',
+      where: 'username = ?',
+      whereArgs: [username],
+    );
+    return result.isNotEmpty;
+  }
+
   // ============ ANALYTICS OPERATIONS ============
 
   /// Get total income for a date range
@@ -417,5 +526,22 @@ class DatabaseHelper {
   Future<void> close() async {
     final db = await database;
     await db.close();
+  }
+
+  /// Handle database upgrades
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      // Add users table for version 2
+      await db.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          email TEXT UNIQUE NOT NULL,
+          username TEXT UNIQUE NOT NULL,
+          password_hash TEXT NOT NULL,
+          created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+          last_login TEXT
+        )
+      ''');
+    }
   }
 }

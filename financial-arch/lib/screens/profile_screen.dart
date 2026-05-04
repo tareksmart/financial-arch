@@ -43,36 +43,54 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   color: AppColors.surfaceContainerLowest,
                   borderRadius: BorderRadius.circular(16),
                 ),
-                child: Column(
-                  children: [
-                    Container(
-                      width: 80,
-                      height: 80,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: AppColors.primary, width: 3),
-                      ),
-                      child: const Icon(
-                        Icons.person,
-                        size: 40,
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 12),
-                    Text(
-                      localization.translate('user_profile'),
-                      style: AppTextStyles.headlineSmall.copyWith(
-                        color: AppColors.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      localization.translate('premium_member'),
-                      style: AppTextStyles.bodyMedium.copyWith(
-                        color: AppColors.onSurfaceVariant,
-                      ),
-                    ),
-                  ],
+                child: Consumer<AuthenticationProvider>(
+                  builder: (context, authProvider, _) {
+                    final user = authProvider.currentUser;
+                    return Column(
+                      children: [
+                        Container(
+                          width: 80,
+                          height: 80,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(
+                              color: AppColors.primary,
+                              width: 3,
+                            ),
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            size: 40,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 12),
+                        Text(
+                          user?.username ??
+                              localization.translate('user_profile'),
+                          style: AppTextStyles.headlineSmall.copyWith(
+                            color: AppColors.primary,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          user?.email ?? 'No email',
+                          style: AppTextStyles.bodyMedium.copyWith(
+                            color: AppColors.onSurfaceVariant,
+                          ),
+                        ),
+                        if (user?.lastLogin != null) ...[
+                          const SizedBox(height: 8),
+                          Text(
+                            'Last login: ${user!.lastLogin?.toString().split('.')[0] ?? 'Never'}',
+                            style: AppTextStyles.bodySmall.copyWith(
+                              color: AppColors. onSurfaceVariant,
+                            ),
+                          ),
+                        ],
+                      ],
+                    );
+                  },
                 ),
               ),
               const SizedBox(height: 32),
@@ -127,7 +145,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             value: settingsProvider.theme == 'light'
                                 ? localization.translate('light')
                                 : localization.translate('dark'),
-                            isLocked: true,
+                            onTap: () => _showThemeDialog(
+                                context, settingsProvider, localization),
                           ),
                         ],
                       );
@@ -161,7 +180,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () {},
+                  onPressed: () {
+                    _showLogoutDialog(context, localization);
+                  },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.error,
                     padding: const EdgeInsets.symmetric(vertical: 12),
@@ -235,6 +256,68 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  void _showThemeDialog(
+    BuildContext context,
+    SettingsProvider settingsProvider,
+    LocalizationProvider localization,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(localization.translate('select_theme')),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: Text(localization.translate('light')),
+              onTap: () {
+                settingsProvider.setSetting('theme', 'light');
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: Text(localization.translate('dark')),
+              onTap: () {
+                settingsProvider.setSetting('theme', 'dark');
+                Navigator.pop(context);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showLogoutDialog(
+    BuildContext context,
+    LocalizationProvider localization,
+  ) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: Text(localization.translate('logout')),
+        content: Text(localization.translate('confirm_logout')),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(localization.translate('cancel')),
+          ),
+          TextButton(
+            onPressed: () {
+              context.read<AuthenticationProvider>().logout();
+              Navigator.pop(context);
+              Navigator.pushReplacementNamed(context, '/login');
+            },
+            child: Text(
+              localization.translate('logout'),
+              style: const TextStyle(color: AppColors.error),
+            ),
+          ),
+        ],
       ),
     );
   }
